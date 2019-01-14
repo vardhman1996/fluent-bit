@@ -142,6 +142,9 @@ REGISTER_OUT_PLUGIN("out_splunk")
 REGISTER_OUT_PLUGIN("out_stackdriver")
 REGISTER_OUT_PLUGIN("out_stdout")
 REGISTER_OUT_PLUGIN("out_narvar")
+
+REGISTER_OUT_PLUGIN("out_pulsar")
+
 REGISTER_OUT_PLUGIN("out_td")
 REGISTER_OUT_PLUGIN("out_lib")
 REGISTER_OUT_PLUGIN("out_flowcounter")
