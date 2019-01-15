@@ -21,10 +21,10 @@ cmake_minimum_required(VERSION 2.8)
 project (pulsar-cpp)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
 
-option(BUILD_TESTS "Build tests" ON)
+option(BUILD_TESTS "Build tests" OFF)
 MESSAGE(STATUS "BUILD_TESTS:  " ${BUILD_TESTS})
 
-option(BUILD_PYTHON_WRAPPER "Build Pulsar Python wrapper" ON)
+option(BUILD_PYTHON_WRAPPER "Build Pulsar Python wrapper" OFF)
 MESSAGE(STATUS "BUILD_PYTHON_WRAPPER:  " ${BUILD_PYTHON_WRAPPER})
 
 option(LINK_STATIC "Link against static libraries" OFF)
