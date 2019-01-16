@@ -32,24 +32,24 @@ ADD_CUSTOM_COMMAND(
          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(pulsarStatic STATIC ${PULSAR_SOURCES} PulsarApi.pb.h PulsarApi.pb.cc)
-add_library(pulsarShared SHARED ${PULSAR_SOURCES} PulsarApi.pb.h PulsarApi.pb.cc)
+#add_library(pulsarShared SHARED ${PULSAR_SOURCES} PulsarApi.pb.h PulsarApi.pb.cc)
 
 set(LIBRARY_VERSION $ENV{PULSAR_LIBRARY_VERSION})
 if (NOT LIBRARY_VERSION)
     set(LIBRARY_VERSION ${PV})
 endif(NOT LIBRARY_VERSION)
 
-set_target_properties(pulsarStatic PROPERTIES OUTPUT_NAME ${LIB_NAME} VERSION '${LIBRARY_VERSION}')
-set_target_properties(pulsarShared PROPERTIES OUTPUT_NAME ${LIB_NAME} VERSION '${LIBRARY_VERSION}')
+set_target_properties(pulsarStatic PROPERTIES OUTPUT_NAME ${LIB_NAME})
+#set_target_properties(pulsarShared PROPERTIES OUTPUT_NAME ${LIB_NAME})
 
 set(TARGET_DIR ${CMAKE_SOURCE_DIR}/plugins/out_pulsar/pulsar/pulsar-client-cpp)
 include_directories(${TARGET_DIR})
 include_directories(${TARGET_DIR}/include)
 
 target_link_libraries(pulsarStatic ${COMMON_LIBS})
-target_link_libraries(pulsarShared ${COMMON_LIBS})
+#target_link_libraries(pulsarShared ${COMMON_LIBS})
 
 install(TARGETS pulsarStatic DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(TARGETS pulsarShared DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+#install(TARGETS pulsarShared DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 install(DIRECTORY "../include/pulsar" DESTINATION include)
