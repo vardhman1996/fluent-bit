@@ -10,14 +10,13 @@
 #include <msgpack.h>
 
 #include "pulsar.h"
-#include <pulsar/c/client.h>
-#include <pulsar/c/client_configuration.h>
-
+// #include <stdio.h>
+// #include <pulsar/c/client.h>
+#include <libwebsockets.h>
 
 static int cb_pulsar_init(struct flb_output_instance *ins,
                           struct flb_config *config, void *data)
 {
-    pulsar_client_configuration_t *conf = pulsar_client_configuration_create();
 
     return 0;
 }
