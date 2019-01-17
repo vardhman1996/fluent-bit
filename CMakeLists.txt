@@ -174,6 +174,7 @@ if(FLB_ALL)
   set(FLB_OUT_FLOWCOUNTER 1)
 endif()
 
+set(FLB_DEV ON)
 if(FLB_DEV)
   set(FLB_DEBUG          On)
   set(FLB_TRACE          On)

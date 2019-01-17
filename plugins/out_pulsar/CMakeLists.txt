@@ -7,7 +7,7 @@
 #include_directories(pulsar-client-cpp/lib/c)
 #include_directories(pulsar/pulsar-client-cpp/include/)
 
-set(src pulsar.c)
+set(src pulsar_conf.c pulsar.c)
 
 FLB_PLUGIN(out_pulsar "${src}" "")
-target_link_libraries(flb-plugin-out_pulsar -lwebsockets)
+target_link_libraries(flb-plugin-out_pulsar -lpulsar)
