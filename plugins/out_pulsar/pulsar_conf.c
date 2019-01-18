@@ -26,7 +26,6 @@ struct flb_pulsar *flb_pulsar_conf_create(struct flb_output_instance *ins,
     tmp = flb_output_get_property("broker", ins);
     if (tmp) {
         topic_conf->broker = flb_strdup(tmp);
-        // flb_info("[out pulsar] using broker url: %s\n", tmp);    
     } else {
         flb_info("[out pulsar] broker link not provided, using defaut: %s\n", FLB_PULSAR_BROKER); 
         topic_conf->broker = flb_strdup(FLB_PULSAR_BROKER);
