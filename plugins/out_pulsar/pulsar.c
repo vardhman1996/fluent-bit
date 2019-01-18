@@ -76,15 +76,8 @@ static void cb_pulsar_flush(void *data, size_t bytes,
         map = root.via.array.ptr[1];
 
         map_size = map.via.map.size;
-        msgpack_pack_map(&tmp_pck, map_size + 1);
+        msgpack_pack_map(&tmp_pck, map_size);
 
-        /* Append date key */
-        msgpack_pack_str(&tmp_pck, 4);
-        msgpack_pack_str_body(&tmp_pck, "time", 4);
-        /* Append date value */
-        msgpack_pack_double(&tmp_pck, flb_time_to_double(&tms));
-
-        // flb_info("MAP SIZE: %d", map_size);
         for (i = 0; i < map_size; i++) {
             msgpack_object *k = &map.via.map.ptr[i].key;
             msgpack_object *v = &map.via.map.ptr[i].val;
@@ -100,7 +93,6 @@ static void cb_pulsar_flush(void *data, size_t bytes,
     /* Format to JSON */
     ret = flb_msgpack_raw_to_json_str(tmp_sbuf.data, tmp_sbuf.size,
                                       &json_buf, &json_size);
-    // flb_info("JSON: %s\n", json_buf);
 
     msgpack_sbuffer_destroy(&tmp_sbuf);
     if (ret != 0) {
