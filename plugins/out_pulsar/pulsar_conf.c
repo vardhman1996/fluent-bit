@@ -47,6 +47,7 @@ struct flb_pulsar *flb_pulsar_conf_create(struct flb_output_instance *ins,
                                             ctx->producer_conf, &ctx->producer);
     if (err != pulsar_result_Ok) {
         flb_error("[out pulsar] Failed to create producer: %s\n", pulsar_result_str(err));
+        flb_free(ctx);
         return NULL;
     }
 

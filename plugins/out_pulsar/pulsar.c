@@ -39,29 +39,96 @@ static void cb_pulsar_flush(void *data, size_t bytes,
                             void *out_context,
                             struct flb_config *config)
 {
-    struct flb_pulsar *ctx = out_context;
-    
-    const char* my_data = "{'fluent-bit':'asdf'}";
+    int i;
+    int ret;
+    int array_size = 0;
+    int map_size;
+    size_t off = 0;
+    char *json_buf;
+    size_t json_size;
+    msgpack_unpacked result;
+    msgpack_object root;
+    msgpack_object map;
+    msgpack_sbuffer tmp_sbuf;
+    msgpack_packer tmp_pck;
+    msgpack_object *obj;
+    struct flb_time tms;
 
-    for (int i = 0; i < 10; i++) {
-        pulsar_message_t* message = pulsar_message_create();
-        pulsar_message_set_content(message, my_data, strlen(my_data));
-        pulsar_result err = pulsar_producer_send(ctx->producer, message);
-        if (err == pulsar_result_Ok) {
-            flb_info("[out pulsar] message sent successfully");
-        } else {
-            flb_error("[out pulsar] Failed to publish message: %s\n", pulsar_result_str(err));
-            FLB_OUTPUT_RETURN(FLB_ERROR);
+    struct flb_pulsar *ctx = out_context;
+
+    /* Iterate the original buffer and perform adjustments */
+    msgpack_unpacked_init(&result);
+    while (msgpack_unpack_next(&result, data, bytes, &off)) {
+        array_size++;
+    }
+    msgpack_unpacked_destroy(&result);
+    msgpack_unpacked_init(&result);
+
+    /* Create temporal msgpack buffer */
+    msgpack_sbuffer_init(&tmp_sbuf);
+    msgpack_packer_init(&tmp_pck, &tmp_sbuf, msgpack_sbuffer_write);
+    msgpack_pack_array(&tmp_pck, array_size);
+
+    off = 0;
+    while (msgpack_unpack_next(&result, data, bytes, &off)) {
+        root = result.data;
+        flb_time_pop_from_msgpack(&tms, &result, &obj);
+        map = root.via.array.ptr[1];
+
+        map_size = map.via.map.size;
+        msgpack_pack_map(&tmp_pck, map_size + 1);
+
+        /* Append date key */
+        msgpack_pack_str(&tmp_pck, 4);
+        msgpack_pack_str_body(&tmp_pck, "time", 4);
+        /* Append date value */
+        msgpack_pack_double(&tmp_pck, flb_time_to_double(&tms));
+
+        // flb_info("MAP SIZE: %d", map_size);
+        for (i = 0; i < map_size; i++) {
+            msgpack_object *k = &map.via.map.ptr[i].key;
+            msgpack_object *v = &map.via.map.ptr[i].val;
+
+            msgpack_pack_object(&tmp_pck, *k);
+            msgpack_pack_object(&tmp_pck, *v);
         }
-        pulsar_message_free(message);
     }
 
+    /* Release msgpack */
+    msgpack_unpacked_destroy(&result);
+
+    /* Format to JSON */
+    ret = flb_msgpack_raw_to_json_str(tmp_sbuf.data, tmp_sbuf.size,
+                                      &json_buf, &json_size);
+    // flb_info("JSON: %s\n", json_buf);
+
+    msgpack_sbuffer_destroy(&tmp_sbuf);
+    if (ret != 0) {
+        FLB_OUTPUT_RETURN(FLB_ERROR);
+    }
+
+    pulsar_message_t* message = pulsar_message_create();
+    pulsar_message_set_content(message, json_buf, strlen(json_buf));
+    pulsar_result err = pulsar_producer_send(ctx->producer, message);
+    if (err == pulsar_result_Ok) {
+        flb_info("[out pulsar] message sent successfully");
+    } else {
+        flb_error("[out pulsar] Failed to publish message: %s\n", pulsar_result_str(err));
+        FLB_OUTPUT_RETURN(FLB_ERROR);
+    }
+    pulsar_message_free(message);
+  
     FLB_OUTPUT_RETURN(FLB_OK);
 }
 
 
 static int cb_pulsar_exit(void *data, struct flb_config *config)
 {
+    struct flb_pulsar *ctx = data;
+    if (!ctx) {
+        return 0;
+    }
+    flb_free(ctx);
     return 0;
 }
 

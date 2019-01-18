@@ -17,10 +17,6 @@ struct flb_pulsar {
     /* pulsar configurations */
     struct flb_topic_conf topic_conf;
 
-    // char *name;
-    // char *topic;
-    // char *broker;
-
     /* Internal configs */
     pulsar_client_configuration_t *conf;
     pulsar_client_t *client;
