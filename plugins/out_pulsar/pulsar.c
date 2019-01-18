@@ -41,8 +41,9 @@ static void cb_pulsar_flush(void *data, size_t bytes,
 {
     int i;
     int ret;
-    int array_size = 0;
     int map_size;
+    int array_size = 0;
+    int queue_full_retries = 0;
     size_t off = 0;
     char *json_buf;
     size_t json_size;
@@ -55,6 +56,9 @@ static void cb_pulsar_flush(void *data, size_t bytes,
     struct flb_time tms;
 
     struct flb_pulsar *ctx = out_context;
+    if (ctx->blocked) {
+        FLB_OUTPUT_RETURN(FLB_RETRY);
+    }
 
     /* Iterate the original buffer and perform adjustments */
     msgpack_unpacked_init(&result);
@@ -99,15 +103,40 @@ static void cb_pulsar_flush(void *data, size_t bytes,
         FLB_OUTPUT_RETURN(FLB_ERROR);
     }
 
+ retry:
+    if (queue_full_retries >= 10) {
+        flb_free(json_buf);
+        FLB_OUTPUT_RETURN(FLB_RETRY);
+    }
+
     pulsar_message_t* message = pulsar_message_create();
     pulsar_message_set_content(message, json_buf, strlen(json_buf));
     pulsar_result err = pulsar_producer_send(ctx->producer, message);
     if (err == pulsar_result_Ok) {
         flb_info("[out pulsar] message sent successfully");
+    } else if (err == pulsar_result_ProducerQueueIsFull) {
+        flb_warn("[out pulsar] internal pulsar queue is full, retying in one second");
+        
+        /*
+         * Stop other flush requests from coming in by sending a retry messsage for
+         * those flush requests. The caller will issue a retry at a later time.
+         */
+        ctx->blocked = FLB_TRUE;
+
+        /*
+         * Sleep for sometime before pulsar hopefully comes back up
+         * Try to retry sending this message for maximum 10 times and then issue a retry
+         * to the caller if still not successful.
+         */
+        flb_time_sleep(1000, config);
+        queue_full_retries++;
+        goto retry;
     } else {
         flb_error("[out pulsar] Failed to publish message: %s\n", pulsar_result_str(err));
         FLB_OUTPUT_RETURN(FLB_ERROR);
     }
+
+    flb_free(json_buf);
     pulsar_message_free(message);
   
     FLB_OUTPUT_RETURN(FLB_OK);
@@ -120,6 +149,12 @@ static int cb_pulsar_exit(void *data, struct flb_config *config)
     if (!ctx) {
         return 0;
     }
+    pulsar_producer_close(ctx->producer);
+    pulsar_producer_free(ctx->producer);
+    pulsar_producer_configuration_free(ctx->producer_conf);
+    pulsar_client_close(ctx->client);
+    pulsar_client_free(ctx->client);
+    pulsar_client_configuration_free(ctx->conf);
     flb_free(ctx);
     return 0;
 }
