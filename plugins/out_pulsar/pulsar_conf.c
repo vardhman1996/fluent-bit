@@ -39,7 +39,7 @@ struct flb_pulsar *flb_pulsar_conf_create(struct flb_output_instance *ins,
     if (tmp) {
         topic_conf->topic = flb_strdup(tmp);
     } else {
-        flb_error("[out pulsar] topic name not provided, using default: %s\n", FLB_PULSAR_TOPIC);
+        flb_info("[out pulsar] topic name not provided, using default: %s\n", FLB_PULSAR_TOPIC);
         topic_conf->topic = FLB_PULSAR_TOPIC;
     }
     pulsar_result err = pulsar_client_create_producer(ctx->client, topic_conf->topic,
