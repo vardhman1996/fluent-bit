@@ -133,7 +133,7 @@ static void cb_pulsar_flush(void *data, size_t bytes,
         goto retry;
     } else {
         flb_error("[out pulsar] Failed to publish message: %s\n", pulsar_result_str(err));
-        FLB_OUTPUT_RETURN(FLB_ERROR);
+        FLB_OUTPUT_RETURN(FLB_RETRY);
     }
 
     flb_free(json_buf);
