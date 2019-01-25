@@ -20,11 +20,24 @@ RUN apt-get update && \
       libsasl2-dev \
       pkg-config \
       libsystemd-dev \
-      zlib1g-dev
+      zlib1g-dev \
+      libcurl4-openssl-dev \
+      liblog4cxx-dev \
+      libprotobuf-dev \
+      libboost-all-dev \
+      libgtest-dev \
+      google-mock \
+      libjsoncpp-dev \
+      libxml2-utils \ 
+      protobuf-compiler \
+      python-setuptools
 
 RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src/
 COPY . /tmp/src/
 RUN rm -rf /tmp/src/build/*
+
+RUN sudo dpkg -i /tmp/src/plugins/out_pulsar/apache-pulsar-client.deb && \
+    sudo dpkg -i /tmp/src/plugins/out_pulsar/apache-pulsar-client-dev.deb
 
 WORKDIR /tmp/src/build/
 RUN cmake -DFLB_DEBUG=Off \
