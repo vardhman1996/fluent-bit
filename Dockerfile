@@ -36,9 +36,11 @@ RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src/
 COPY . /tmp/src/
 RUN rm -rf /tmp/src/build/*
 
-RUN sudo dpkg -i /tmp/src/plugins/out_pulsar/apache-pulsar-client.deb && \
-    sudo dpkg -i /tmp/src/plugins/out_pulsar/apache-pulsar-client-dev.deb
+RUN dpkg -i /tmp/src/plugins/out_pulsar/apache-pulsar-client.deb && \
+    dpkg -i /tmp/src/plugins/out_pulsar/apache-pulsar-client-dev.deb
 
+RUN dpkg -L apache-pulsar-client && dpkg -L apache-pulsar-client-dev
+    
 WORKDIR /tmp/src/build/
 RUN cmake -DFLB_DEBUG=Off \
           -DFLB_TRACE=Off \
@@ -64,9 +66,7 @@ COPY conf/fluent-bit.conf \
      conf/plugins.conf \
      /fluent-bit/etc/
 
-FROM gcr.io/distroless/cc
-MAINTAINER Eduardo Silva <eduardo@treasure-data.com>
-LABEL Description="Fluent Bit docker image" Vendor="Fluent Organization" Version="1.1"
+FROM debian:stretch
 
 COPY --from=builder /usr/lib/x86_64-linux-gnu/*sasl* /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /usr/lib/x86_64-linux-gnu/libz* /usr/lib/x86_64-linux-gnu/
@@ -81,8 +81,13 @@ COPY --from=builder /usr/lib/x86_64-linux-gnu/liblz4.so* /usr/lib/x86_64-linux-g
 COPY --from=builder /lib/x86_64-linux-gnu/libgcrypt.so* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libpcre.so* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libgpg-error.so* /lib/x86_64-linux-gnu/
+COPY --from=builder /tmp/src/plugins/out_pulsar/apache-pulsar-client.deb /tmp/
+COPY --from=builder /tmp/src/plugins/out_pulsar/apache-pulsar-client-dev.deb /tmp/
 
 COPY --from=builder /fluent-bit /fluent-bit
+
+RUN dpkg -i /tmp/apache-pulsar-client.deb && \
+    dpkg -i /tmp/apache-pulsar-client-dev.deb
 
 #
 EXPOSE 2020
