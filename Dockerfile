@@ -20,7 +20,11 @@ RUN apt-get update && \
       libsasl2-dev \
       pkg-config \
       libsystemd-dev \
-      zlib1g-dev \
+      zlib1g-dev
+
+# Install dependencies for pulsar
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
       libcurl4-openssl-dev \
       liblog4cxx-dev \
       libprotobuf-dev \
@@ -38,8 +42,6 @@ RUN rm -rf /tmp/src/build/*
 
 RUN dpkg -i /tmp/src/plugins/out_pulsar/apache-pulsar-client.deb && \
     dpkg -i /tmp/src/plugins/out_pulsar/apache-pulsar-client-dev.deb
-
-RUN dpkg -L apache-pulsar-client && dpkg -L apache-pulsar-client-dev
     
 WORKDIR /tmp/src/build/
 RUN cmake -DFLB_DEBUG=Off \
@@ -81,16 +83,16 @@ COPY --from=builder /usr/lib/x86_64-linux-gnu/liblz4.so* /usr/lib/x86_64-linux-g
 COPY --from=builder /lib/x86_64-linux-gnu/libgcrypt.so* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libpcre.so* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libgpg-error.so* /lib/x86_64-linux-gnu/
+
+# Need to copy over the pulsar debian package since they are a runtime dependency
 COPY --from=builder /tmp/src/plugins/out_pulsar/apache-pulsar-client.deb /tmp/
 COPY --from=builder /tmp/src/plugins/out_pulsar/apache-pulsar-client-dev.deb /tmp/
 
 COPY --from=builder /fluent-bit /fluent-bit
 
+# install the pulsar packages on the deployment machine
 RUN dpkg -i /tmp/apache-pulsar-client.deb && \
     dpkg -i /tmp/apache-pulsar-client-dev.deb
 
-#
-EXPOSE 2020
-
 # Entry point
-CMD ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf"]
+CMD ["/fluent-bit/bin/fluent-bit", "-i", "cpu", "-o", "pulsar"]
